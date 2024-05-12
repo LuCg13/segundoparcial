@@ -2,9 +2,13 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const mysql = require("mysql");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Habilitar CORS
+app.use(cors());
 
 // Middleware para analizar el cuerpo de la solicitud como JSON
 app.use(express.json());
@@ -97,8 +101,23 @@ app.post("/login", (req, res) => {
  */
 // Endpoint para obtener cursos (requiere autenticación)
 app.get("/cursos", verifyToken, (req, res) => {
-  // Simplemente para ejemplo, aquí obtendrías los cursos del usuario autenticado desde tu base de datos
-  res.json({ cursos: ["Curso 1", "Curso 2", "Curso 3"] });
+  // Consulta a la base de datos para obtener los cursos
+  connection.query("SELECT * FROM cursos", (err, results) => {
+    if (err) {
+      console.error("Error al obtener los cursos:", err);
+      return res.status(500).json({ error: "Error al obtener los cursos" });
+    }
+
+    // Extracción de los resultados obtenidos de la base de datos
+    const cursos = results.map((curso) => ({
+      id: curso.id,
+      nombre: curso.nombre,
+      descripcion: curso.descripcion,
+    }));
+
+    // Envío de la lista de cursos como respuesta
+    res.json({ cursos });
+  });
 });
 
 // Middleware para verificar token JWT
